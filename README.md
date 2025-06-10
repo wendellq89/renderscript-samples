@@ -7,7 +7,6 @@ This repository is forked from the original [Android Renderscript Samples](https
 ## Update
 - Only keep the RenderScriptMigrationSample sample
 - Upgrades kotlin, AGP, build.gradle
-- build new libVkLayer_khronos_validation.so file to support 16KB page size.
 
 ## License
 
