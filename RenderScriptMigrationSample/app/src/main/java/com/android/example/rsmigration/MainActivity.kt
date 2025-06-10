@@ -86,9 +86,7 @@ class MainActivity : AppCompatActivity() {
         // Set up image processors
         val imageProcessors = mutableListOf(
             // RenderScript intrinsics
-            RenderScriptImageProcessor(this, useIntrinsic = true),
-            // RenderScript script kernels
-            RenderScriptImageProcessor(this, useIntrinsic = false),
+            RenderScriptImageProcessor(this),
             // Vulkan compute pipeline
             VulkanImageProcessor(this),
             // GLSL compute pipeline

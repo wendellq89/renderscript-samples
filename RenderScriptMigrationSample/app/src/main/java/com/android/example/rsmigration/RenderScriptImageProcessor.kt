@@ -21,17 +21,16 @@ import android.graphics.Bitmap
 import android.renderscript.*
 import kotlin.math.*
 
-
-class RenderScriptImageProcessor(context: Context, useIntrinsic: Boolean) : ImageProcessor {
-    override val name = "RenderScript " + if (useIntrinsic) "Intrinsics" else "Scripts"
+/**
+ * use Intrinsics RenderScript
+ */
+class RenderScriptImageProcessor(context: Context) : ImageProcessor {
+    override val name = "RenderScript Intrinsics"
 
     // Renderscript scripts
     private val mRS: RenderScript = RenderScript.create(context)
     private val mIntrinsicColorMatrix = ScriptIntrinsicColorMatrix.create(mRS)
     private val mIntrinsicBlur = ScriptIntrinsicBlur.create(mRS, Element.U8_4(mRS))
-    private val mScriptColorMatrix = ScriptC_colormatrix(mRS)
-    private val mScriptBlur = ScriptC_blur(mRS)
-    private val mUseIntrinsic = useIntrinsic
 
     // Input image
     private lateinit var mInAllocation: Allocation
@@ -67,10 +66,6 @@ class RenderScriptImageProcessor(context: Context, useIntrinsic: Boolean) : Imag
         }
         mOutAllocations =
             Array(numberOfOutputImages) { i -> Allocation.createFromBitmap(mRS, mOutputImages[i]) }
-
-        // Update dimensional variables in blur kernel
-        mScriptBlur._gWidth = inputImage.width
-        mScriptBlur._gHeight = inputImage.height
     }
 
     override fun rotateHue(radian: Float, outputIndex: Int): Bitmap {
@@ -91,13 +86,8 @@ class RenderScriptImageProcessor(context: Context, useIntrinsic: Boolean) : Imag
         mat[2, 2] = (.114 + .886 * cos - .203 * sin).toFloat()
 
         // Invoke filter kernel
-        if (mUseIntrinsic) {
-            mIntrinsicColorMatrix.setColorMatrix(mat)
-            mIntrinsicColorMatrix.forEach(mInAllocation, mOutAllocations[outputIndex])
-        } else {
-            mScriptColorMatrix.invoke_setMatrix(mat)
-            mScriptColorMatrix.forEach_root(mInAllocation, mOutAllocations[outputIndex])
-        }
+        mIntrinsicColorMatrix.setColorMatrix(mat)
+        mIntrinsicColorMatrix.forEach(mInAllocation, mOutAllocations[outputIndex])
 
         // Copy to bitmap, this should cause a synchronization rather than a full copy.
         mOutAllocations[outputIndex].copyTo(mOutputImages[outputIndex])
@@ -108,44 +98,12 @@ class RenderScriptImageProcessor(context: Context, useIntrinsic: Boolean) : Imag
         if (radius < 1.0f || radius > 25.0f) {
             throw RuntimeException("Invalid radius ${radius}, must be within [1.0, 25.0]")
         }
-        if (mUseIntrinsic) {
-            // Set blur kernel size
-            mIntrinsicBlur.setRadius(radius)
+        // Set blur kernel size
+        mIntrinsicBlur.setRadius(radius)
 
-            // Invoke filter kernel
-            mIntrinsicBlur.setInput(mInAllocation)
-            mIntrinsicBlur.forEach(mOutAllocations[outputIndex])
-        } else {
-            // Calculate gaussian kernel, this is equivalent to ComputeGaussianWeights at
-            // https://cs.android.com/android/platform/superproject/+/master:frameworks/rs/cpu_ref/rsCpuIntrinsicBlur.cpp;l=57
-            val sigma = 0.4f * radius + 0.6f
-            val coeff1 = 1.0f / (sqrt(2 * Math.PI) * sigma).toFloat()
-            val coeff2 = -1.0f / (2 * sigma * sigma)
-            val iRadius = ceil(radius).toInt()
-            val kernel = FloatArray(51) { i ->
-                if (i > (iRadius * 2 + 1)) {
-                    0.0f
-                } else {
-                    val r = (i - iRadius).toFloat()
-                    coeff1 * (Math.E.toFloat().pow(coeff2 * r * r))
-                }
-            }
-            val normalizeFactor = 1.0f / kernel.sum()
-            kernel.forEachIndexed { i, v -> kernel[i] = v * normalizeFactor }
-
-            // Apply a two-pass blur algorithm: a horizontal blur kernel followed by a vertical
-            // blur kernel. This is equivalent to, but more efficient than applying a 2D blur
-            // filter in a single pass. The two-pass blur algorithm has two kernels, each of
-            // time complexity O(iRadius), while the single-pass algorithm has only one kernel,
-            // but the time complexity is O(iRadius^2).
-            mScriptBlur._gRadius = iRadius
-            mScriptBlur._gKernel = kernel
-            mScriptBlur._gScratch1 = mTempAllocations[0]
-            mScriptBlur._gScratch2 = mTempAllocations[1]
-            mScriptBlur.forEach_copyIn(mInAllocation, mTempAllocations[0])
-            mScriptBlur.forEach_horizontal(mTempAllocations[1])
-            mScriptBlur.forEach_vertical(mOutAllocations[outputIndex])
-        }
+        // Invoke filter kernel
+        mIntrinsicBlur.setInput(mInAllocation)
+        mIntrinsicBlur.forEach(mOutAllocations[outputIndex])
 
         // Copy to bitmap, this should cause a synchronization rather than a full copy.
         mOutAllocations[outputIndex].copyTo(mOutputImages[outputIndex])

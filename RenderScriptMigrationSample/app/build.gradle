@@ -2,6 +2,7 @@ apply plugin: 'com.android.application'
 apply plugin: 'kotlin-android'
 
 android {
+    namespace = "com.android.example.rsmigration"
     compileSdk 33
 
     // When building this project with with SDK build tools of version earlier than 31.0.0, and
@@ -10,7 +11,6 @@ android {
     //     error: target API level '29' is out of range ('11' - '24')
     //
     // This issue has been fixed in SDK build tools 31.0.0.
-    buildToolsVersion '31.0.0'
 
     defaultConfig {
         applicationId "com.android.example.rsmigration"
@@ -24,9 +24,11 @@ android {
         externalNativeBuild {
             cmake {
                 arguments '-DANDROID_TOOLCHAIN=clang',
-                          '-DANDROID_STL=c++_static'
+                        '-DANDROID_STL=c++_static'
+                abiFilters 'armeabi-v7a', 'arm64-v8a', 'x86', 'x86_64'
             }
         }
+
     }
 
     buildTypes {
@@ -36,7 +38,7 @@ android {
     }
     externalNativeBuild {
         cmake {
-            version '3.10.2'
+            version '4.0.2'
             path 'src/main/cpp/CMakeLists.txt'
         }
     }
@@ -48,7 +50,13 @@ android {
             }
         }
     }
-
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
+    }
+    kotlinOptions {
+        jvmTarget = "17"
+    }
     lintOptions {
         abortOnError false
     }
