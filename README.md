@@ -1,27 +1,13 @@
 # Android Renderscript Samples
 
-This repository contains a set of individual Android Studio projects:
+This repository is forked from the original [Android Renderscript Samples](https://github.com/android/renderscript-samples) repository:
 - [RenderScriptMigrationSample](./RenderScriptMigrationSample): A sample that demonstrates how to migrate RenderScript to Vulkan.
-- [BasicRenderScript](./BasicRenderScript): A legacy sample that demonstrates how to use RenderScript to perform some basic image processing.
-- [RenderScriptIntrinsic](./RenderScriptIntrinsic): A legacy sample that demonstrates how to use RenderScript intrinsics.
-
-## Renderscript Support Status
-
-Renderscript has been deprecated since Android 12, the samples here are part of the Renderscript deprecation toolkits which also includes:
-- [renderscript deprecation blog](https://android-developers.googleblog.com/2021/04/android-gpu-compute-going-forward.html)
-- [the migration guide](https://developer.android.com/guide/topics/renderscript/migrate)
-- [the migration toolkit library](https://github.com/android/renderscript-intrinsics-replacement-toolkit)
 
 
-## Support
-
-We highly recommend to use [Stack Overflow](http://stackoverflow.com/questions/tagged/android) to get help from the Andorid community.
-
-If you've found an error in this sample, please file an issue:
-https://github.com/android/renderscript-samples
-
-Patches are encouraged, and may be submitted by forking this project and
-submitting a pull request through GitHub.
+## Update
+- Only keep the RenderScriptMigrationSample sample
+- Upgrades kotlin, AGP, build.gradle
+- build new libVkLayer_khronos_validation.so file to support 16KB page size.
 
 ## License
 
